@@ -1,0 +1,92 @@
+# source: 	https://exiftool.org/forum/index.php?topic=9686.0
+#			https://exiftool.org/forum/index.php?topic=7986.0
+
+use POSIX qw(strftime);
+$now = strftime "%Y:%m:%d", localtime;
+print "Todays' date is $now\n";
+
+my $force_move_even_if_invalid_dates_found = false;
+
+%Image::ExifTool::UserDefined = (
+    'Image::ExifTool::Composite' => {
+		# Select oldest date from a number of date tags
+        oldest_date => {
+            Desire => {
+                0 => 'DateTimeOriginal',			# para fotos: "Date Taken"
+                1 => 'CreateDate',					# para videos: "Media Created" or "Date Acquired"
+				2 => 'filename',					# nome do ficheiro: ex: VID-20191220-WA0011.mp4			TODO: test this!
+				3 => 'zipmodifydate',				# para fotos HEIC : é mais antigo que date
+                4 => 'FileModifyDate',				# data de criação original do ficheiro "Date" (do video/imagem)
+				5 => 'FileCreateDate',				# "Date created" que é a data criada na cópia (do [File:System]) 
+				6 => 'ModifyDate',					# ?data de modificação "Date modified" (do [File:System]) ?
+				7 => 'DateTimeCreated',
+				8 => 'MDItemFSContentChangeDate',
+				9 => 'MDItemFSCreationDate',
+            },
+            ValueConv => q{
+                my $oldest = undef;
+                my $oldest_with_bad = undef;
+				my $min_date_threshold = '2005:01:01';
+
+				my $nu = -1;
+                for my $date (@val) {
+                    $date =~ s/[+-]\d{2}:\d{2}$//; # Strip TimeZone
+					$nu++;
+					
+					#print "Data: $date\n";
+                    if($date && (!$oldest_with_bad || $date lt $oldest_with_bad)) {
+						$oldest_with_bad = $date;
+					}
+					
+					# Avoid Invalid dates like "1900:01:00 00:00:00" or "1725:04" or "0000:00:00 00:00:00".
+					# Actually, for our purpose, we can accept only after 2020 (plus back some time, due to old photos (google photos) being reshared):
+					# TODO: give warning showing current threshold that avoided date to be considered
+					if( not defined $date or $date lt $min_date_threshold ){
+						#if( $force_move_even_if_invalid_dates_found ){
+                        #    print colored( "WARNING: date ($date) is undefined or smaller than threshold ($min_date_threshold).", 'yellow' ), "\n";
+						#	next;
+						#} else {
+						#	print colored( "ERROR: date ($date) is undefined or smaller than threshold ($min_date_threshold).", 'red' ), "\n";
+						#	exit;
+						#}
+
+                        next;
+					}	
+
+                    # TODO: give error if date into the future + STOP execution and wait user to run with force parameter
+					#if( $date gt $now ){
+						#if( $force_move_even_if_invalid_dates_found ){
+                        #    print colored( "WARNING: date $date is bigger than today ($now).", 'yellow' ), "\n";
+						#	next;
+						#} else {
+						#	print colored( "ERROR: date $date is bigger than today ($now).", 'red' ), "\n";
+							#exit;
+						#}
+                     #   next;
+					#}
+					
+					#print "$Desire[$nu] : $date\n";
+					print "Data (valid) $nu: $date\n";
+					
+					if ($date && (!$oldest || $date lt $oldest)) {
+						$oldest = $date;
+					}
+                }
+
+                #if ($oldest_with_bad ne $oldest) {
+				#	# TODO: give warning showing current threshold that avoided date to be considered
+				#	print "WARNING: oldest valid date $oldest doens't match with older one found: $oldest_with_bad.  ( Min Date threshold = $min_date_threshold )";
+				#	print colored( "WARNING: oldest valid date $oldest doens't match with older one found: $oldest_with_bad.  ( Min Date threshold = $min_date_threshold )", 'yellow' ), "\n";
+				#}
+
+                print "Final (valid) date: $oldest\n";
+
+                return $oldest;
+			},
+            PrintConv => '$self->ConvertDateTime($val)',
+        },
+    },
+);
+
+#------------------------------------------------------------------------------
+1;  #end
