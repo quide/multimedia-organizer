@@ -161,10 +161,11 @@ Function Move-Folder-Android {
     }
 }
 
-$base_path="$pwd\.." #"C:\Users\Pedro\Desktop\PEDRO\P DISCO"
+$base_path="$pwd\.." # go to the folder below bin/ (where this executable exists) or below "por arranjar/"
+# normalize (remove ".." from path):
+$base_path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($base_path)
 
 # add bin to path
-#$env:Path += ';' + $pwd # bin 
 $ENV:PATH=”$ENV:PATH;$pwd\..\bin”
 
 $intermediary_path = $base_path + "\por arranjar"
