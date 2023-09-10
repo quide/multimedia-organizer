@@ -161,14 +161,17 @@ Function Move-Folder-Android {
     }
 }
 
+$intermediary_path = "$pwd"  # assume user starts from folder he wants to organize (when extraction from mobile was already done (i.e. he is running this on some non-mobile photos folder))
+#$intermediary_path = $base_path + "\por arranjar"
+
 $base_path="$pwd\.." # go to the folder below bin/ (where this executable exists) or below "por arranjar/"
 # normalize (remove ".." from path):
 $base_path = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($base_path)
 
 # add bin to path
-$ENV:PATH=”$ENV:PATH;$pwd\..\bin”
-
-$intermediary_path = $base_path + "\por arranjar"
+$ENV:PATH=”$ENV:PATH;$base_path\bin”
+#echo "path = $ENV:PATH"    # for DEBUG
+echo " "
 
 $output_path = $base_path + "\MULTIMEDIA ARRANJADA"
 echo "Directoria de saída: $output_path"
@@ -218,7 +221,8 @@ if ($from_mobile ) {
 
         echo " Antes de continuar é melhor apagar coisas que vieram do WhatsApp ..."
         
-    } else {
+    } 
+    else {
         $intermediary_path = $base_path + "\por arranjar - iphone"
 		
 		if (test-path $intermediary_path) {
@@ -269,10 +273,10 @@ echo "Let's now organize the multimedia?"
 pause
 
 $global:LASTEXITCODE = 0
-Invoke-Expression "& `"exiftool.exe`" -r -P $extensions -v0 -d `"$output_path\%Y\%m-%B\%d\%%c\%%f.%%e`" `"-filename<oldest_date`" ."
+Invoke-Expression "& `"exiftool.exe`" -r -P $extensions -v0 -d `"$output_path\%Y\%m-%B\%d\%%c\%%f.%%e`" `"-filename<oldest_date`" ." # (can be run directly in a terminal "as is")
 #Invoke-Expression "& `"exiftool.exe`" -r -P $extensions -v0 -d `"$output_path\%Y\%m-%B\%d\%%c\%%f.%%e`" `"-testname<oldest_date`" ." # for DEBUG purposes
 if($LASTEXITCODE){
-    echo "ERROR: Couldn't run exiftool correctly"
+    echo "ERROR: Couldn't run exiftool correctly (code: $LASTEXITCODE)"
     Invoke-Expression "& EchoArgs `"exiftool.exe`" -r -P $extensions -v0 -d `"$output_path\%Y\%m-%B\%d\%%c\%%f.%%e`" `"-filename<oldest_date`" ."
     return
 }
