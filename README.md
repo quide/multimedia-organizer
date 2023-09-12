@@ -10,3 +10,6 @@ move multimedia from android and apple mobile phones and organize by date folder
 ## Usage
 * copy files to a folder named bin/ inside a folder named MULTIMEDIA
 * run BIG PLAN.ps1
+
+## Extra
+* run dupeguru to remove duplicates
